@@ -1,0 +1,10 @@
+flask
+pymongo
+pdfplumber
+pytesseract
+pdf2image
+python-dateutil
+scikit-learn
+pytest
+black
+flake8
