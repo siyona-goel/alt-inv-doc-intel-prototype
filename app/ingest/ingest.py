@@ -2,7 +2,7 @@ import pdfplumber
 import os
 from datetime import datetime, timezone
 from app.db.mongo import get_db
-
+from app.classify.classifier import classify_text
 
 def ingest_pdf(file_path: str) -> str:
     
@@ -29,7 +29,7 @@ def ingest_pdf(file_path: str) -> str:
         text = "\n".join(text_parts)
 
     db = get_db()
-
+    doc_type = classify_text(text)
     doc = {
     "filename": os.path.basename(file_path),
     "filepath": file_path,
@@ -37,7 +37,7 @@ def ingest_pdf(file_path: str) -> str:
     "tables": tables,   # list of tables (each table = list of rows)
     "ingest_ts": datetime.now(timezone.utc),
     "status": "ingested",
-    "doc_type": None,   # to be filled later by classifier
+    "doc_type": doc_type,   
     "extracted_data": {},
     }
 

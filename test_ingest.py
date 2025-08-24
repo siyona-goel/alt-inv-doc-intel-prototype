@@ -15,9 +15,9 @@ def main():
     # Print a preview
     print("Filename:", doc["filename"])
     print("Doc type:", doc["doc_type"])
-    print("Status:", doc["status"])
+    # print("Status:", doc["status"])
     print("Text preview:", doc["raw_text"][:200], "...")
-    print("Number of tables extracted:", len(doc.get("tables", [])))
+    # print("Number of tables extracted:", len(doc.get("tables", [])))
 
 
 if __name__ == "__main__":
