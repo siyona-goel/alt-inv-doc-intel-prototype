@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timezone
 from app.db.mongo import get_db
 from app.classify.classifier import classify_text
+from app.extract.distribution import extract_distribution_fields
 
 def ingest_pdf(file_path: str) -> str:
     
@@ -30,6 +31,11 @@ def ingest_pdf(file_path: str) -> str:
 
     db = get_db()
     doc_type = classify_text(text)
+
+    extracted_data = {}
+    if doc_type == "distribution_notice":
+        extracted_data = extract_distribution_fields(text)
+
     doc = {
     "filename": os.path.basename(file_path),
     "filepath": file_path,
@@ -38,7 +44,7 @@ def ingest_pdf(file_path: str) -> str:
     "ingest_ts": datetime.now(timezone.utc),
     "status": "ingested",
     "doc_type": doc_type,   
-    "extracted_data": {},
+    "extracted_data": extracted_data,
     }
 
     result = db.documents.insert_one(doc)
