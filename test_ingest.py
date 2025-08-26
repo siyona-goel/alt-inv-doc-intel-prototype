@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 
 def main():
     # Ingest the sample file
-    doc_id = ingest_pdf("data/synthetic_dist_notice_1.pdf")
+    doc_id = ingest_pdf("data/Sample-Capital-Call-Letter.pdf")
     print("Ingested with id:", doc_id)
 
     # Fetch back from Mongo

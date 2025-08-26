@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from app.db.mongo import get_db
 from app.classify.classifier import classify_text
 from app.extract.distribution import extract_distribution_fields
+from app.extract.capital_call import extract_capital_call_fields
 
 def ingest_pdf(file_path: str) -> str:
     
@@ -35,6 +36,8 @@ def ingest_pdf(file_path: str) -> str:
     extracted_data = {}
     if doc_type == "distribution_notice":
         extracted_data = extract_distribution_fields(text)
+    elif doc_type == "capital_call_letter":
+        extracted_data = extract_capital_call_fields(text)
 
     doc = {
     "filename": os.path.basename(file_path),
