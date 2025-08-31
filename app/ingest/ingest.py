@@ -5,6 +5,8 @@ from app.db.mongo import get_db
 from app.classify.classifier import classify_text
 from app.extract.distribution import extract_distribution_fields
 from app.extract.capital_call import extract_capital_call_fields
+from app.extract.valuation_reports import extract_valuation_fields
+from app.extract.quarterly_update import extract_quarterly_update_fields
 
 def ingest_pdf(file_path: str) -> str:
     
@@ -38,12 +40,16 @@ def ingest_pdf(file_path: str) -> str:
         extracted_data = extract_distribution_fields(text)
     elif doc_type == "capital_call_letter":
         extracted_data = extract_capital_call_fields(text)
+    elif doc_type == "valuation_reports":
+        extracted_data = extract_valuation_fields(text)
+    elif doc_type == "quarterly_update":
+        extracted_data = extract_quarterly_update_fields(text)
 
     doc = {
     "filename": os.path.basename(file_path),
     "filepath": file_path,
     "raw_text": text,
-    "tables": tables,   # list of tables (each table = list of rows)
+    "tables": tables,                       # list of tables (each table = list of rows)
     "ingest_ts": datetime.now(timezone.utc),
     "status": "ingested",
     "doc_type": doc_type,   

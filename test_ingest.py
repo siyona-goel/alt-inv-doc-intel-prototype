@@ -3,8 +3,11 @@ from app.db.mongo import get_db
 from bson.objectid import ObjectId
 
 def main():
+    # Define file path here
+    file_path = "data/Sample-Quarterly-3.pdf"
+
     # Ingest the sample file
-    doc_id = ingest_pdf("data/Sample-Capital-Call-Letter.pdf")
+    doc_id = ingest_pdf(file_path)
     print("Ingested with id:", doc_id)
 
     # Fetch back from Mongo
@@ -12,12 +15,14 @@ def main():
     doc = db.documents.find_one({"_id": ObjectId(doc_id)})
 
     # Print a preview
-    print("Filename:", doc["filename"])
-    print("Doc type:", doc["doc_type"])
-    # print("Status:", doc["status"])
-    print("Text preview:", doc["raw_text"][:200], "...")
-    # print("Number of tables extracted:", len(doc.get("tables", [])))
-    print("Extracted data:", doc["extracted_data"])
+    print("\nFilename:", doc["filename"])
+    print("\nDoc type:", doc["doc_type"])
+    
+    # print("\nText preview:", doc["raw_text"][:200], "...")
+
+    # Extracted data
+    extracted = doc["extracted_data"]
+    print("\nExtracted data:", extracted)
 
 if __name__ == "__main__":
     main()
