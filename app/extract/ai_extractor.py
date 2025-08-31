@@ -235,3 +235,71 @@ def ai_extract_capital_call_fields(
                 sources["currency"] = "ai_context"
 
     return results, sources, raw
+
+def ai_extract_valuation_fields(
+    text: str,
+    min_score: float = 0.20,
+    context_chars: int = 4000
+):
+    """
+    AI-first extraction for Valuation Reports using QA pipeline.
+    Returns: (results_dict, sources_dict, raw_ai_responses_dict)
+    """
+    if os.getenv("DOCINTEL_AI", "1") == "0":
+        return {}, {}, {}
+
+    ctx = _clean_text(text, max_chars=context_chars)
+    qa = _get_qa_pipe()
+
+    questions = {
+        "valuation_date": "What is the valuation date of the report?",
+        "methodology": "What methodology or valuation approach was used (e.g., DCF, Market Approach, Cost Approach)?",
+        "discount_rate": "What discount rate was applied in the valuation?",
+        "multiple": "What multiples (e.g., EBITDA multiple, revenue multiple) were used?",
+        "final_valuation": "What is the final or concluded valuation amount?",
+        "currency": "What is the currency of the final valuation?",
+    }
+
+    results = {k: None for k in questions}
+    sources = {k: None for k in questions}
+    raw = {}
+
+    for key, q in questions.items():
+        try:
+            out = qa(question=q, context=ctx)
+            ans = out.get("answer", "").strip()
+            score = float(out.get("score", 0.0))
+            raw[key] = {"answer": ans, "score": score}
+
+            if not ans or score < min_score:
+                results[key] = None
+                sources[key] = "ai_unconfident"
+                continue
+
+            if key == "final_valuation":
+                cur, amt = _extract_currency_and_amount_from_text(ans)
+                results["final_valuation"] = amt or ans
+                if cur:
+                    results["currency"] = cur
+                sources[key] = "ai"
+                if results["final_valuation"]:
+                    sources["currency"] = sources.get("currency", "ai")
+            elif key in ("discount_rate", "multiple"):
+                # Strip % or x
+                val = re.sub(r"[^\d\.]", "", ans)
+                results[key] = val or ans
+                sources[key] = "ai"
+            elif key == "currency":
+                cur, _ = _extract_currency_and_amount_from_text(ans)
+                results["currency"] = cur or ans
+                sources[key] = "ai"
+            else:
+                results[key] = ans
+                sources[key] = "ai"
+
+        except Exception as e:
+            raw[key] = {"error": str(e)}
+            results[key] = None
+            sources[key] = "ai_error"
+
+    return results, sources, raw
