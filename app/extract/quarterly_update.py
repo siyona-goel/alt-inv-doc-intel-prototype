@@ -1,9 +1,9 @@
 import re
 from typing import Dict, List
 from decimal import Decimal, InvalidOperation
+from app.extract.ai_extractor import ai_extract_quarterly_fields
 
 def _clean(text: str) -> str:
-    """Normalize text for easier regex matching."""
     if not text:
         return ""
     # Remove weird spaces, bullets, normalize line breaks
@@ -105,10 +105,37 @@ def _extract_highlights(text: str, max_items: int = 8) -> List[str]:
 
 
 def extract_quarterly_update_fields(text: str) -> Dict[str, object]:
-    """Extract KPIs and highlights from quarterly updates."""
+    
+    # Hybrid extractor for quarterly updates.
+    # AI-first, falls back to regex if AI unconfident.
+    
     text = text or ""
+
+    # --- Run AI extractor first ---
+    ai_res, ai_src, ai_raw = ai_extract_quarterly_fields(text)
+
     data = {
-        "kpis": _extract_kpis(text),
-        "highlights": _extract_highlights(text),
+        "kpis": ai_res.get("kpis", []),
+        "highlights": ai_res.get("highlights", []),
     }
+    sources = {"kpis": {}, "highlights": None}
+
+    # --- Regex fallback for KPIs ---
+    if not data["kpis"]:
+        data["kpis"] = _extract_kpis(text)
+        sources["kpis"] = {"fallback": "regex"}
+    else:
+        sources["kpis"] = ai_src.get("kpis", {})
+
+    # --- Regex fallback for Highlights ---
+    if not data["highlights"]:
+        data["highlights"] = _extract_highlights(text)
+        sources["highlights"] = "regex"
+    else:
+        sources["highlights"] = ai_src.get("highlights", "ai")
+
+    # Attach observability
+    data["_sources"] = sources
+    data["_ai_raw"] = ai_raw
+
     return data

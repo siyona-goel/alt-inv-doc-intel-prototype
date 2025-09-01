@@ -4,7 +4,7 @@ import os
 from transformers import pipeline
 from decimal import Decimal, InvalidOperation
 
-_MODEL_QA = "deepset/roberta-base-squad2"  # SQuAD-style QA model
+_MODEL_QA = "deepset/roberta-large-squad2"  # SQuAD-style QA model
 _pipe_qa = None
 _lock = threading.Lock()
 
@@ -301,5 +301,127 @@ def ai_extract_valuation_fields(
             raw[key] = {"error": str(e)}
             results[key] = None
             sources[key] = "ai_error"
+
+    return results, sources, raw
+
+def ai_extract_quarterly_fields(
+    text: str,
+    min_score: float = 0.15,
+    context_chars: int = 4000,
+    metrics: list | None = None,
+    max_kpis: int = 12,
+    max_highlights: int = 8
+):
+    """
+    AI-first extraction for Quarterly Update fields using QA.
+    Returns:
+      results: {"kpis": [ {metric, value, currency, pct_change, raw}, ... ], "highlights": [str,...]}
+      sources: {"kpis": {metric: "ai"|"ai_unconfident"|"ai_error"}, "highlights": "ai"|"ai_unconfident"|"ai_error"}
+      raw: raw per-question responses for debugging
+    """
+
+    # If AI disabled via ENV, quick exit
+    if os.getenv("DOCINTEL_AI", "1") == "0":
+        return {"kpis": [], "highlights": []}, {"kpis": {}, "highlights": "ai_off"}, {}
+
+    ctx = _clean_text(text, max_chars=context_chars)
+    qa = _get_qa_pipe()
+
+    if metrics is None:
+        metrics = [
+            "Revenue", "ARR", "Net income", "Operating income", "Gross margin",
+            "EBITDA", "EBITDA margin", "EPS", "Cash", "Users", "Churn", "Bookings",
+            "Retention", "ARPU", "CAC", "Subscriptions"
+        ]
+
+    results = {"kpis": [], "highlights": []}
+    sources = {"kpis": {}, "highlights": None}
+    raw = {}
+
+    # Helper to parse percent/bps in a short string
+    def _parse_pct(s: str):
+        if not s:
+            return None
+        m = re.search(r"([+-]?\d+(?:\.\d+)?)\s*%|\b(\d+(?:\.\d+)?)\s*bps\b", s, re.IGNORECASE)
+        if not m:
+            return None
+        if m.group(1):
+            return m.group(1).strip() + "%"
+        if m.group(2):
+            return m.group(2).strip() + " bps"
+        return None
+
+    # Ask targeted KPI questions
+    for metric in metrics:
+        q = f"What is the {metric} reported in this document? Provide the value and percent change if available."
+        try:
+            out = qa(question=q, context=ctx)
+            ans = (out.get("answer") or "").strip()
+            score = float(out.get("score", 0.0))
+            raw[metric] = {"answer": ans, "score": score}
+            if not ans or score < min_score:
+                sources["kpis"][metric] = "ai_unconfident"
+                continue
+
+            # parse currency/amount and percent
+            cur, amt = _extract_currency_and_amount_from_text(ans)
+            pct = _parse_pct(ans)
+
+            # build KPI record if anything found (amount or pct)
+            if amt or pct:
+                rec = {
+                    "metric": metric,
+                    "value": amt,
+                    "currency": cur,
+                    "pct_change": pct,
+                    "raw": ans,
+                }
+                results["kpis"].append(rec)
+                sources["kpis"][metric] = "ai"
+            else:
+                # Sometimes the answer might be textual ("unchanged", "no material change")
+                # Keep the raw answer so downstream code can inspect
+                rec = {
+                    "metric": metric,
+                    "value": None,
+                    "currency": None,
+                    "pct_change": None,
+                    "raw": ans,
+                }
+                results["kpis"].append(rec)
+                sources["kpis"][metric] = "ai"
+
+            # stop early if we've gathered enough KPIs
+            if len(results["kpis"]) >= max_kpis:
+                break
+
+        except Exception as e:
+            raw[metric] = {"error": str(e)}
+            sources["kpis"][metric] = "ai_error"
+            continue
+
+    # Extract narrative highlights: ask QA to return a compact list separated by a sentinel
+    qh = f"List up to {max_highlights} one-sentence highlights about performance, growth, or strategic events from this document. Separate each highlight with '||'."
+    try:
+        out_h = qa(question=qh, context=ctx)
+        ans_h = (out_h.get("answer") or "").strip()
+        score_h = float(out_h.get("score", 0.0))
+        raw["highlights"] = {"answer": ans_h, "score": score_h}
+        if ans_h and score_h >= min_score:
+            # Prefer explicit separator if model used it
+            if "||" in ans_h:
+                parts = [p.strip() for p in ans_h.split("||") if p.strip()]
+            else:
+                # fallback: split into sentences
+                parts = [p.strip().rstrip(".;") for p in re.split(r"(?<=[.!?])\s+", ans_h) if len(p.strip()) > 10]
+            # filter short or junk items
+            parts = [p for p in parts if len(p) > 10]
+            results["highlights"] = parts[:max_highlights]
+            sources["highlights"] = "ai"
+        else:
+            sources["highlights"] = "ai_unconfident"
+    except Exception as e:
+        raw["highlights"] = {"error": str(e)}
+        sources["highlights"] = "ai_error"
 
     return results, sources, raw
