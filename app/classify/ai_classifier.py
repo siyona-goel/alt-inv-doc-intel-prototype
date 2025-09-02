@@ -8,7 +8,7 @@ _LABELS = [
     ("capital_call_letter", "capital call notice"),
     ("distribution_notice", "distribution notice"), 
     ("valuation_reports", "valuation report"),
-    ("quarterly_update_letter", "quarterly update"),
+    ("quarterly_update", "quarterly update"),
 ]
 
 _HYPOTHESIS = "This document is a {}."

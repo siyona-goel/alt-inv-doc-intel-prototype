@@ -8,7 +8,7 @@ from app.extract.capital_call import extract_capital_call_fields
 from app.extract.valuation_reports import extract_valuation_fields
 from app.extract.quarterly_update import extract_quarterly_update_fields
 
-def ingest_pdf(file_path: str) -> str:
+def ingest_pdf(file_path: str, original_filename: str | None = None) -> str:
     
     # error check
     if not os.path.exists(file_path):
@@ -46,7 +46,7 @@ def ingest_pdf(file_path: str) -> str:
         extracted_data = extract_quarterly_update_fields(text)
 
     doc = {
-    "filename": os.path.basename(file_path),
+    "filename": original_filename or os.path.basename(file_path),
     "filepath": file_path,
     "raw_text": text,
     "tables": tables,                       # list of tables (each table = list of rows)

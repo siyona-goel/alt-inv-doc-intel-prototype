@@ -57,17 +57,24 @@ def _extract_kpis(text: str) -> List[Dict[str, str]]:
     for pat in patterns:
         for m in re.finditer(pat, text, re.IGNORECASE):
             metric = m.group(1).strip()
-            value = m.group(3).strip()
-            kpis.append({"metric": metric, "value": value})
+            raw_value = m.group(3).strip()
+            normalized_value = _normalize_amount(raw_value)
+
+            kpis.append({
+                "metric": metric,
+                "value": normalized_value,
+                "raw": raw_value
+            })
 
     # Deduplicate
     seen = set()
     unique = []
     for item in kpis:
-        key = (item["metric"].lower(), item["value"].lower())
+        key = (item["metric"].lower(), item["value"].lower() if item["value"] else item["raw"].lower())
         if key not in seen:
             seen.add(key)
             unique.append(item)
+
     return unique
 
 

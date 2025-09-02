@@ -16,7 +16,7 @@ DOC_TYPES = {
         "valuation", "valuation report", "valuation summary", "net asset value",
         "business valuation", "appraisal", "fair value"
     ],
-    "quarterly_update_letter": [
+    "quarterly_update": [
         "quarter", "quarterly update", "quarterly report", "quarterly highlights",
         "recent highlights", "quarterly letter", "quarterly performance",
         "shareholder letter", "investor letter", "quarterly results",

@@ -8,3 +8,6 @@ scikit-learn
 pytest
 black
 flake8
+fastapi
+uvicorn[standard]
+python-multipart
