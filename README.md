@@ -251,3 +251,24 @@ graph TB
 2. Upload a financial PDF document.
 3. The system will classify the document and extract fields.
 4. Results are displayed in the UI and stored in MongoDB.
+
+![Alt text](images/3.png)
+
+![Alt text](images/4.png)
+
+![Alt text](images/1.png)
+
+![Alt text](images/2.png)
+
+https://github.com/user-attachments/assets/0e70ea90-9b8c-413a-bd27-88f9ec5b74fe
+
+## About Assumptions and Synthetic Data Generation
+- Documents provided to the system are PDFs (other formats like Word or images are not currently supported).
+- Each document belongs to one of the four supported categories:
+  - Capital Call Notice
+  - Distribution Notice
+  - Valuation Report
+  - Quarterly Update
+- Extraction templates are aligned with the above categories. If a document is misclassified, extracted fields may still appear, but they may not be meaningful.
+- The AI classifier/extractor uses lightweight Hugging Face models. Internet access is assumed for the first run to download model weights.
+- Some synthetic PDFs were generated using Claude that mimic common structures and language of investor communications to test the application.
