@@ -156,7 +156,7 @@ The system uses a hybrid approach combining AI and traditional methods:
 ```mermaid
 flowchart TD
     START([User Uploads PDF]) --> UPLOAD[FastAPI Receives File]
-    UPLOAD --> EXTRACT_TEXT[PDFPlumber Extracts Text & Tables]
+    UPLOAD --> EXTRACT_TEXT[PDFPlumber Extracts Text]
     EXTRACT_TEXT --> CLASSIFY{AI Classification}
     
     CLASSIFY -->|Capital Call| CC_EXTRACT[Capital Call Extractor]
@@ -211,23 +211,6 @@ graph LR
     
     CLASSIFY_MODULE --> AI_CLASSIFIER
     EXTRACT_MODULES --> AI_EXTRACTOR
-```
-
-### Database Schema
-
-Documents are stored in MongoDB with the following structure:
-```json
-{
-  "_id": "ObjectId",
-  "filename": "string",
-  "filepath": "string", 
-  "raw_text": "string",
-  "tables": "array",
-  "ingest_ts": "datetime",
-  "status": "string",
-  "doc_type": "string",
-  "extracted_data": "object"
-}
 ```
 
 ### Deployment Architecture
