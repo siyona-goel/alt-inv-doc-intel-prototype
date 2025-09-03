@@ -17,13 +17,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS
+# CORS for local frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 class DocumentResponse(BaseModel):
@@ -78,7 +78,7 @@ async def upload_document(file: UploadFile = File(...)):
             temp_file.flush()
             tmp_path = temp_file.name
 
-        # process the document
+        # Now that the file handle is closed, process the document
         document_id = ingest_pdf(tmp_path, original_filename=file.filename)
 
         return UploadResponse(
@@ -132,14 +132,14 @@ async def list_documents(
     skip: Optional[int] = 0,
     doc_type: Optional[str] = None
 ):
+    """
+    List documents with optional filtering and pagination.
     
-    # List documents with optional filtering and pagination.
-    
-    # **limit**: Maximum number of documents to return (default: 100, max: 1000)
-    # **skip**: Number of documents to skip for pagination (default: 0)
-    # **doc_type**: Filter by document type (optional)
-    # Returns list of documents with basic information
-    
+    - **limit**: Maximum number of documents to return (default: 100, max: 1000)
+    - **skip**: Number of documents to skip for pagination (default: 0)
+    - **doc_type**: Filter by document type (optional)
+    - Returns list of documents with basic information
+    """
     try:
         # Validate parameters
         if limit > 1000:

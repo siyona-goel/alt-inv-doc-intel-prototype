@@ -1,4 +1,4 @@
-# Document Intelligence API
+# Alternative Investments Document Intelligence
 
 A FastAPI-based system for processing and extracting data from investment documents (PDFs).
 
