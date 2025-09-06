@@ -70,47 +70,6 @@ def _extract_currency_and_amount(text: str):
 
     return None, None
 
-
-# def extract_valuation_fields(text: str):
-
-#     data = {
-#         "valuation_date": None,
-#         "methodology": None,
-#         "inputs": {
-#             "discount_rate": None,
-#             "multiple": None,
-#         },
-#         "final_valuation": None,
-#         "currency": None,
-#     }
-
-    # Normalize whitespace
-    # text_norm = re.sub(r"[\u00A0\t]", " ", text)
-
-    # --- Valuation Date ---
-    # Support formats like "December 31, 2024" (with optional comma) and other common variants
-    # date_patterns = [
-        # r"valuation\s*date[:\s-]*([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})",
-        # r"valuation\s*date[:\s-]*(\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4})",
-        # r"valuation\s*date[:\s-]*([^\n\r]+?\d{4})",
-        # r"as\s+(?:of|at)[:\s-]*([^\n\r]+?\d{4})",
-        # r"effective\s+date[:\s-]*([^\n\r]+?\d{4})",
-        # r"date\s+of\s+valuation[:\s-]*([^\n\r]+?\d{4})",
-        # r"valuation\s+as\s+(?:of|at)[:\s-]*([^\n\r]+?\d{4})",
-        # r"dated[:\s-]*([^\n\r]+?\d{4})",
-        # Numeric formats fallback
-        # r"\b(\d{1,2}[\-/]\d{1,2}[\-/]\d{2,4})\b",
-    # ]
-    # m = _first(text_norm, date_patterns)
-    # if m:
-    #     candidate = m.group(1).strip().rstrip(".;,) ")
-    #     for dayfirst in (False, True):
-    #         try:
-    #             data["valuation_date"] = dateparser.parse(candidate, fuzzy=True, dayfirst=dayfirst).date().isoformat()
-    #             break
-    #         except Exception:
-    #             continue
-
 def _regex_fallback_valuation_date(text):
     text_norm = re.sub(r"[\u00A0\t]", " ", text)
     date_patterns = [
@@ -133,7 +92,6 @@ def _regex_fallback_valuation_date(text):
             except Exception:
                 continue
     return None
-
 
 # --- Methodology ---
 def _regex_fallback_methodology(text):
@@ -167,7 +125,6 @@ def _regex_fallback_methodology(text):
             return canon
     return _canonicalize_methods(text)
 
-
 # --- Inputs ---
 def _regex_fallback_discount_rate(text):
     discount_patterns = [
@@ -179,7 +136,6 @@ def _regex_fallback_discount_rate(text):
         return m.group(2)
     return None
 
-
 def _regex_fallback_multiple(text):
     multiple_patterns = [
         r"(ev/ebitda|ebitda multiple|revenue multiple|valuation multiple|multiple)[:\s-]*([\d]+(?:\.\d+)?)\s*x",
@@ -189,67 +145,6 @@ def _regex_fallback_multiple(text):
     if m:
         return m.group(2) if m.lastindex and m.lastindex >= 2 else m.group(1)
     return None
-
-# --- Final Valuation ---
-    # value_clauses = [
-    #     r"conclusion of value[:\s-]*([^\n\r]+)",
-    #     r"fair value[:\s-]*([^\n\r]+)",
-    #     r"final valuation[:\s-]*([^\n\r]+)",
-    #     r"(equity value|enterprise value|market value|valuation)[:\s-]*([^\n\r]+)",
-    # ]
-    # for pat in value_clauses:
-    #     m = re.search(pat, text_norm, re.IGNORECASE)
-    #     if m:
-    #         segment = m.group(m.lastindex or 1)
-    #         cur, amt = _extract_currency_and_amount(segment)
-    #         if not amt:
-    #             start = max(0, m.start() - 50)
-    #             end = min(len(text_norm), m.end() + 50)
-    #             context = text_norm[start:end]
-    #             cur, amt = _extract_currency_and_amount(context)
-    #         if amt:
-    #             data["final_valuation"] = amt
-    #             data["currency"] = cur
-    #             break
-
-    # if data["final_valuation"] is None:
-    #     # Fallback: standalone header 'Valuation' and search in following context
-    #     hdr = re.search(r"\bvaluation\b", text_norm, re.IGNORECASE)
-    #     if hdr:
-    #         start = hdr.start()
-    #         end = min(len(text_norm), hdr.end() + 400)
-    #         context = text_norm[start:end]
-    #         cur, amt = _extract_currency_and_amount(context)
-    #         if amt:
-    #             data["final_valuation"] = amt
-    #             data["currency"] = cur
-
-    # if data["final_valuation"] is None:
-    #     m = re.search(r"\b(USD|EUR|GBP|INR|JPY|YEN|CAD|AUD|SGD|HKD|CHF|NZD|CNY|RMB)?\s*([$£€¥₹])?\s*([\d,.]+(?:\s*(?:million|billion|thousand|m|mm|bn|k))?)\b\s*(?:valuation|value)\b",
-    #                   text_norm, re.IGNORECASE)
-    #     if m:
-    #         cur, amt = _extract_currency_and_amount(m.group(0))
-    #         if amt:
-    #             data["final_valuation"] = amt
-    #             data["currency"] = cur
-
-    # # Global context-based fallback: find currency + amount near the word 'valuation'
-    # if data["final_valuation"] is None:
-    #     currency_sign = r"[$£€¥₹]"
-    #     currency_code = r"USD|EUR|GBP|INR|JPY|YEN|CAD|AUD|SGD|HKD|CHF|NZD|CNY|RMB|ZAR|SEK|NOK|DKK"
-    #     amount_re = r"[\d,.]+(?:\s*(?:million|billion|thousand|m|mm|bn|k))?"
-    #     any_money = re.finditer(rf"(?:\b({currency_code})\s*|({currency_sign})\s*)({amount_re})", text_norm, re.IGNORECASE)
-    #     for m in any_money:
-    #         start, end = m.start(), m.end()
-    #         window_start = max(0, start - 200)
-    #         window_end = min(len(text_norm), end + 200)
-    #         window = text_norm[window_start:window_end]
-    #         if re.search(r"\bvaluation\b", window, re.IGNORECASE):
-    #             cur, amt = _extract_currency_and_amount(m.group(0))
-    #             if amt:
-    #                 data["final_valuation"] = amt
-    #                 data["currency"] = cur
-    #                 break
 
 def _regex_fallback_final_valuation(text):
     text_norm = re.sub(r"[\u00A0\t]", " ", text)

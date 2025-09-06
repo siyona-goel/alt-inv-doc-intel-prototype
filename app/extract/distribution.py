@@ -108,8 +108,6 @@ def extract_distribution_fields(text: str):
     # type None if neither pattern matches
     #return data
 # ==========================================================================================================
-""" AI INTEGRATED """
-
 import re
 from dateutil import parser as dateparser
 from decimal import Decimal, InvalidOperation
