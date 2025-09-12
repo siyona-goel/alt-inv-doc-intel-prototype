@@ -1,6 +1,6 @@
 # Alternative Investments Document Intelligence
 
-A comprehensive document processing system that automatically classifies and extracts structured data from alternative investment documents using AI-powered natural language processing and traditional regex-based extraction methods.
+A document processing system that automatically classifies and extracts structured data from alternative investment documents using AI-powered natural language processing and traditional regex-based extraction methods.
 
 ## Architecture Overview
 
@@ -26,7 +26,7 @@ This system is designed as a microservices-based application with three main com
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Axios
 - **Database**: MongoDB
 - **AI/ML**: Transformers (BERT/RoBERTa), Zero-shot classification, Question-Answering
-- **Document Processing**: PDFPlumber, PyTesseract, PDF2Image
+- **Document Processing**: PDFPlumber
 - **Deployment**: Docker, Docker Compose
 
 ## Setup
