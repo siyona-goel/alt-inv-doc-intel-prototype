@@ -29,6 +29,18 @@ This system is designed as a microservices-based application with three main com
 - **Document Processing**: PDFPlumber
 - **Deployment**: Docker, Docker Compose
 
+### Model Selection
+
+#### For Classification : facebook/bart-large-mnli
+- Its zero-shot capability means it can classify documents into categories it wasn't explicitly trained on, just by providing natural language descriptions ("This document is a capital call notice").
+- MNLI training means it's excellent at understanding relationships between text and hypotheses.
+- It can immediately classify new document types by simply adding new labels and does not need retraining.
+
+#### For Extraction : deepset/roberta-base-squad2
+- SQuAD 2.0 training means it's specifically trained on reading comprehension where the model learns to find answers to questions within text passages.
+- It is perfect for finding information snippets (like dates, amounts, IDs) rather than generating new text.
+- It includes unanswerable questions, so the model learned when information isn't present, so it can handle "no answer" situations.
+
 ## Setup
 ### Prerequisites
 - Python 3.11+<br/>
